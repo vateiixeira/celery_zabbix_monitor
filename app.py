@@ -1,15 +1,15 @@
 import celery.bin.base
 import logging
-from functools import wraps
 from celery import Celery
-from django.conf import settings
 import os
-import time
 import threading
 import _thread as thread
 import sys
 from pyzabbix import ZabbixMetric, ZabbixSender
 from decouple import config
+
+logging.basicConfig(filename=config('LOG_PATH'), level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def my_monitor(app):
@@ -17,18 +17,18 @@ def my_monitor(app):
 
     def announce_failed_tasks(event):
         state.event(event)
-        # task name is sent only with -received event, and state
-        # will keep track of this for us.
+
         task = state.tasks.get(event['uuid'])
 
-    
         info = str(task.info()['exception'])
         name = str(task.name)
         value = f'Task: {name} | Error: {info}'
+        logger.info(f"Task captured: {value}")
         packet = [
-            ZabbixMetric('parlatore', 'celery[task]',value)
+            ZabbixMetric(config('HOST'), 'celery[task]',value)
         ]
-        ZabbixSender(use_config='/etc/zabbix/zabbix_agent2.conf').send(packet)
+        result = ZabbixSender(use_config=config('PATH_AGENT_ZABBIX')).send(packet)
+        logger.info(f"Result sending to zabbix: {result}")
 
     with app.connection() as connection:
         recv = app.events.Receiver(connection, handlers={
@@ -39,5 +39,10 @@ def my_monitor(app):
 
 
 if __name__ == '__main__':
+    logger.info("Service started")
     app = Celery(broker=config('BROKER_URL'))
-    my_monitor(app)
+    try:
+        my_monitor(app)
+    except Exception as ex:
+        logger.info("Error!")
+        logger.info(ex)
