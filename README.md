@@ -23,3 +23,9 @@ If you use celery as Service on Linux, put in CELERY_OPTS
     PATH_AGENT_ZABBIX = '/etc/zabbix/zabbix_agent2.conf' (Path to file location of agent2)
     LOG_PATH = '/home/ubuntu/celery_zabbix_monitor/monitor.log' (Path to file location of monitor.log)
 
+
+Link service:
+
+    ln -s /celery_zabbix_monitor
+    ls -l celery_monitor.serice
+
