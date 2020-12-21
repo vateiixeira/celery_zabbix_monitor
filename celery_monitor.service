@@ -1,0 +1,7 @@
+[Unit]
+Description = Celery Monitor
+
+[Service]
+User = ubuntu
+Group= ubuntu
+ExecStart = /home/ubuntu/parlatore_env/bin/python /home/ubuntu/celery_zabbix_monitor/app.py
